@@ -1,4 +1,5 @@
-use mouse_rs::{types::keys::Keys, Mouse};
+
+pub mod mouse;
 use salvo::serve_static::StaticDir;
 use salvo::websocket::WebSocketUpgrade;
 use salvo::{prelude::*, websocket::Message};
@@ -14,6 +15,7 @@ struct User {
 async fn hello() -> &'static str {
     "Hello World"
 }
+
 
 #[handler]
 async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusError> {
@@ -33,24 +35,21 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
                     Ok(msg) => {
                         if msg == "left" {
                             // move 10px to the left
-                            let pos = Mouse::new().get_position().unwrap();
-                            Mouse::new().move_to(pos.x - 10, pos.y).unwrap();
+
+                            crate::mouse::move_mouse(-10, 0);
                         } else if msg == "right" {
                             // move 10px to the right
-                            let pos = Mouse::new().get_position().unwrap();
-                            Mouse::new().move_to(pos.x + 10, pos.y).unwrap();
+                            crate::mouse::move_mouse(10, 0);
                         } else if msg == "up" {
                             // move 10px to the up
-                            let pos = Mouse::new().get_position().unwrap();
-                            Mouse::new().move_to(pos.x, pos.y - 10).unwrap();
+                            crate::mouse::move_mouse(0, -10);
                         } else if msg == "down" {
                             // move 10px to the down
-                            let pos = Mouse::new().get_position().unwrap();
-                            Mouse::new().move_to(pos.x, pos.y + 10).unwrap();
+                            crate::mouse::move_mouse(0, 10);
                         } else if msg == "click" {
-                            Mouse::new().click(&Keys::LEFT).unwrap();
+                            continue;
                         } else if msg == "right_click" {
-                            Mouse::new().click(&Keys::RIGHT).unwrap();
+                            continue;
                         }
                     }
                     Err(_) => {}
