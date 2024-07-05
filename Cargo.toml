@@ -4,4 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ferris-says = "0.3.1"
+salvo = { version = "0.64.0", features = ["serve-static","websocket"]}
+tokio = { version = "1", features = ["macros"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde = "1"
+serde_json = "1"
+mouse-rs = "0.4"

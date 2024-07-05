@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" style="font-size: 10px">
+
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+        content="width=device-width,initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+
+    <meta name="description" content="Edge Drop web-app" />
+
+
+    <title>Edge Drop</title>
+
+    <style>
+        .init-loading {
+            font-size: 3rem;
+            width: 3rem;
+            height: 3rem;
+            position: fixed;
+            top: 42%;
+            left: 50%;
+            will-change: transform;
+            margin: 0 0 0 -1.5rem;
+            color: rgb(2, 109, 172);
+            -webkit-animation: loadingCircle 1.2s infinite linear;
+            animation: loadingCircle 1.2s infinite linear;
+        }
+
+        #root.ready+.init-loading {
+            display: none;
+        }
+
+        @keyframes loadingCircle {
+            from {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+
+            to {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <div class="init-loading" id="initLoading">
+        <svg viewBox="0 0 1024 1024" focusable="false" class="anticon-spin" data-icon="loading" width="1em" height="1em"
+            fill="currentColor" aria-hidden="true">
+            <path
+                d="M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z">
+            </path>
+        </svg>
+    </div>
+    <script>
+        const ws = new WebSocket(`ws://${location.host}/ws?id=123&name=dddf`);
+
+        ws.onopen = function () {
+            console.log('connect');
+
+            ws.send('hello 123');
+        };
+        ws.onmessage = function (e) {
+            console.log('message', e.data);
+        };
+
+        window.addEventListener('keydown', function (e) {
+            switch (e.key) {
+                case 'ArrowUp':
+                    ws.send('up');
+                    break;
+                case 'ArrowDown':
+                    ws.send('down');
+                    break;
+                case 'ArrowLeft':
+                    ws.send('left');
+                    break;
+                case 'ArrowRight':
+                    ws.send('right');
+                    break;
+            }
+        });
+    </script>
+</body>
+
+</html>
