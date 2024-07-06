@@ -1,9 +1,9 @@
-
 pub mod mouse;
 use salvo::serve_static::StaticDir;
 use salvo::websocket::WebSocketUpgrade;
 use salvo::{prelude::*, websocket::Message};
 use serde::{Deserialize, Serialize};
+use serde_json;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct User {
@@ -11,11 +11,16 @@ struct User {
     name: String,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct Pos {
+    x: i32,
+    y: i32,
+}
+
 #[handler]
 async fn hello() -> &'static str {
     "Hello World"
 }
-
 
 #[handler]
 async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusError> {
@@ -31,28 +36,11 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
                     return;
                 };
 
-                match msg.to_str() {
-                    Ok(msg) => {
-                        if msg == "left" {
-                            // move 10px to the left
-
-                            crate::mouse::move_mouse(-10, 0);
-                        } else if msg == "right" {
-                            // move 10px to the right
-                            crate::mouse::move_mouse(10, 0);
-                        } else if msg == "up" {
-                            // move 10px to the up
-                            crate::mouse::move_mouse(0, -10);
-                        } else if msg == "down" {
-                            // move 10px to the down
-                            crate::mouse::move_mouse(0, 10);
-                        } else if msg == "click" {
-                            continue;
-                        } else if msg == "right_click" {
-                            continue;
-                        }
-                    }
-                    Err(_) => {}
+                let pos: serde_json::Result<Pos> = serde_json::from_str(msg.to_str().unwrap());
+                if pos.is_ok() {
+                    let pos = pos.unwrap();
+                    println!("{:#?} ", pos);
+                    mouse::move_mouse(pos.x, pos.y);
                 }
 
                 // send "Hello, {msg}!" back
