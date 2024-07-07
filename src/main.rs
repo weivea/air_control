@@ -4,6 +4,18 @@ use salvo::websocket::WebSocketUpgrade;
 use salvo::{prelude::*, websocket::Message};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use serde_repr::{Deserialize_repr, Serialize_repr};
+
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, Clone)]
+#[repr(i32)]
+enum PosType {
+    None = 0,
+    Move = 1,
+    Scroll = 2,
+    Drag = 3,
+    Click = 4,
+    RightClick = 5,
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct User {
@@ -13,6 +25,7 @@ struct User {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Pos {
+    pos_type: PosType,
     x: i32,
     y: i32,
 }
@@ -35,12 +48,25 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
                     // client disconnected
                     return;
                 };
-
+                print!("msg string: {:#?} ", msg.to_str().unwrap());
                 let pos: serde_json::Result<Pos> = serde_json::from_str(msg.to_str().unwrap());
                 if pos.is_ok() {
                     let pos = pos.unwrap();
                     println!("{:#?} ", pos);
-                    mouse::move_mouse(pos.x, pos.y);
+                    match pos.pos_type {
+                        PosType::Move => {
+                            mouse::move_mouse(pos.x as i32, pos.y as i32);
+                        }
+                        PosType::Click => {
+                            mouse::click_mouse(mouse::MouseButton::Left);
+                        }
+                        PosType::RightClick => {
+                            mouse::click_mouse(mouse::MouseButton::Right);
+                        }
+                        _ => {}
+                    }
+                } else {
+                    println!("{:#?} ", pos);
                 }
 
                 // send "Hello, {msg}!" back
