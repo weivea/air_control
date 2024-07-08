@@ -26,6 +26,7 @@ struct User {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Pos {
     pos_type: PosType,
+    s: i32,
     x: i32,
     y: i32,
 }
@@ -62,6 +63,9 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
                         }
                         PosType::RightClick => {
                             mouse::click_mouse(mouse::MouseButton::Right);
+                        }
+                        PosType::Scroll => {
+                            mouse::scroll(pos.s);
                         }
                         _ => {}
                     }
