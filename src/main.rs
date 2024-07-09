@@ -12,9 +12,13 @@ enum PosType {
     None = 0,
     Move = 1,
     Scroll = 2,
-    Drag = 3,
-    Click = 4,
-    RightClick = 5,
+    LeftDown = 3,
+    LeftUp = 4,
+    RightDown = 5,
+    RightUp = 6,
+    Click = 7,
+    RightClick = 8,
+    Drag = 9,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -49,14 +53,14 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
                     // client disconnected
                     return;
                 };
-                print!("msg string: {:#?} ", msg.to_str().unwrap());
+                // print!("msg string: {:#?} ", msg.to_str().unwrap());
                 let pos: serde_json::Result<Pos> = serde_json::from_str(msg.to_str().unwrap());
                 if pos.is_ok() {
                     let pos = pos.unwrap();
-                    println!("{:#?} ", pos);
+                    // println!("{:#?} ", pos);
                     match pos.pos_type {
                         PosType::Move => {
-                            mouse::move_mouse(pos.x as i32, pos.y as i32);
+                            mouse::move_mouse(pos.x, pos.y);
                         }
                         PosType::Click => {
                             mouse::click_mouse(mouse::MouseButton::Left);
@@ -66,6 +70,21 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
                         }
                         PosType::Scroll => {
                             mouse::scroll(pos.s);
+                        }
+                        PosType::LeftDown => {
+                            mouse::mouse_down(mouse::MouseButton::Left);
+                        }
+                        PosType::LeftUp => {
+                            mouse::mouse_up(mouse::MouseButton::Left);
+                        }
+                        PosType::RightDown => {
+                            mouse::mouse_down(mouse::MouseButton::Right);
+                        }
+                        PosType::RightUp => {
+                            mouse::mouse_up(mouse::MouseButton::Right);
+                        }
+                        PosType::Drag => {
+                            mouse::mouse_drag(pos.x , pos.y)
                         }
                         _ => {}
                     }

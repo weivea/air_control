@@ -11,9 +11,13 @@ enum MouseState {
   None = 0,
   Move = 1,
   Scroll = 2,
-  Drag = 3,
-  Click = 4,
-  RightClick = 5
+  LeftDown = 3,
+  LeftUp = 4,
+  RightDown = 5,
+  RightUp = 6,
+  Click = 7,
+  RightClick = 8,
+  Drag = 9,
 }
 
 const touchPad = ref<HTMLDivElement | null>(null);
@@ -58,16 +62,16 @@ function scale(v: number, exponentially_scale = 1, liner_scale = 1) {
 watch(() => {
   return { ...mouseDate };
 
-}, (newdate, olddate) => {
-  if (newdate.state === MouseState.None ||
-    (newdate.point.x === 0 && newdate.point.y === 0 || olddate.point.x === 0 && olddate.point.y === 0)) {
+}, (newDate, oldDate) => {
+  if (newDate.state === MouseState.None ||
+    (newDate.point.x === 0 && newDate.point.y === 0 || oldDate.point.x === 0 && oldDate.point.y === 0)) {
     return;
   }
 
-  const newPoint = newdate.point;
-  const oldPoint = olddate.point;
-  // console.log('watch', newdate);
-  if (newdate.state === MouseState.Move) {
+  const newPoint = newDate.point;
+  const oldPoint = oldDate.point;
+  // console.log('watch', newDate);
+  if (newDate.state === MouseState.Move) {
     const deltaPos = { x: newPoint.x - oldPoint.x, y: newPoint.y - oldPoint.y };
 
     const x = Math.floor(scale(deltaPos.x, 1.5, 1.1));
@@ -76,18 +80,18 @@ watch(() => {
       return;
     }
     ws.send(JSON.stringify({
-      pos_type: newdate.state,
+      pos_type: newDate.state,
       s: 0,
       x,
       y
     }));
-  } else if (newdate.state === MouseState.Scroll) {
+  } else if (newDate.state === MouseState.Scroll) {
     const delta = newPoint.y - oldPoint.y;
     scrollJudgeOffset += delta;
 
     if (Math.abs(scrollJudgeOffset) > 6) {
       const d = {
-        pos_type: newdate.state,
+        pos_type: newDate.state,
         s: Math.round(scrollJudgeOffset / 6),
         x: 0,
         y: 0
@@ -95,6 +99,26 @@ watch(() => {
       ws.send(JSON.stringify(d));
       scrollJudgeOffset = 0;
     }
+  } else if (newDate.state === MouseState.Drag && oldDate.state !== MouseState.Drag) {
+    ws.send(JSON.stringify({
+      pos_type: MouseState.LeftDown,
+      s: 0,
+      x: 0,
+      y: 0
+    }));
+  } else if (newDate.state === MouseState.Drag && oldDate.state === MouseState.Drag) {
+    const deltaPos = { x: newPoint.x - oldPoint.x, y: newPoint.y - oldPoint.y };
+    const x = Math.floor(scale(deltaPos.x, 1.5, 1.1));
+    const y = Math.floor(scale(deltaPos.y, 1.5, 1.1));
+    if (x === 0 && y === 0) {
+      return;
+    }
+    ws.send(JSON.stringify({
+      pos_type: newDate.state,
+      s: 0,
+      x,
+      y
+    }));
   }
 
 });
@@ -144,6 +168,7 @@ function onTouch(e: TouchEvent) {
       handleMouseMove(e.touches);
       break;
     case MouseState.Drag:
+      handleMouseMove(e.touches);
       break;
   }
   e.preventDefault();
@@ -152,33 +177,56 @@ function handleMouseMove(touchList: TouchList) {
   if (touchList.length === 0) {
     return;
   }
-  // console.log('handleMouseMove', touchList);
-  const p0 = touchList[0];
+  if (touchList.length === 1 && mouseDate.state !== MouseState.Move) {
+    return;
+  }
+  if (touchList.length === 2 && mouseDate.state !== MouseState.Scroll) {
+    return;
+  }
+  if (touchList.length === 3 && mouseDate.state !== MouseState.Drag) {
+    return;
+  }
+  const p0 = touchList[touchList.length - 1];
   mouseDate.point = { x: p0.clientX, y: p0.clientY };
 }
 
 function onTouchEnd(e: TouchEvent) {
-  // check click
-  if (Date.now() - clickCheckTime < 100) {
-    if (mouseDate.state <= MouseState.Move) {
+
+  if (e.touches.length === 0) {
+    // check click
+    if (Date.now() - clickCheckTime < 100) {
+      if (mouseDate.state <= MouseState.Move) {
+        ws.send(JSON.stringify({
+          pos_type: MouseState.Click,
+          s: 0,
+          x: 0,
+          y: 0
+        }));
+      } else if (mouseDate.state === MouseState.Scroll) {
+        ws.send(JSON.stringify({
+          pos_type: MouseState.RightClick,
+          s: 0,
+          x: 0,
+          y: 0
+        }));
+      }
+    }
+
+    // check drag end
+    if (mouseDate.state === MouseState.Drag) {
       ws.send(JSON.stringify({
-        pos_type: MouseState.Click,
-        s: 0,
-        x: 0,
-        y: 0
-      }));
-    } else if (mouseDate.state === MouseState.Scroll) {
-      ws.send(JSON.stringify({
-        pos_type: MouseState.RightClick,
+        pos_type: MouseState.LeftUp,
         s: 0,
         x: 0,
         y: 0
       }));
     }
-  }
 
-  mouseDate.state = MouseState.None;
+    mouseDate.state = MouseState.None;
+
+  }
   mouseDate.point = { x: 0, y: 0 };
+
 }
 
 onMounted(() => {
