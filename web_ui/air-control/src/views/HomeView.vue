@@ -34,7 +34,7 @@ const ws = new WebSocket(`ws://${location.host}/ws?id=123&name=dddf`);
 ws.onopen = function () {
   console.log('connect');
 
-  ws.send('hello 123');
+  // ws.send('hello 123');
 };
 ws.onmessage = function (e) {
   console.log('message', e.data);
@@ -99,13 +99,6 @@ watch(() => {
       ws.send(JSON.stringify(d));
       scrollJudgeOffset = 0;
     }
-  } else if (newDate.state === MouseState.Drag && oldDate.state !== MouseState.Drag) {
-    ws.send(JSON.stringify({
-      pos_type: MouseState.LeftDown,
-      s: 0,
-      x: 0,
-      y: 0
-    }));
   } else if (newDate.state === MouseState.Drag && oldDate.state === MouseState.Drag) {
     const deltaPos = { x: newPoint.x - oldPoint.x, y: newPoint.y - oldPoint.y };
     const x = Math.floor(scale(deltaPos.x, 1.5, 1.1));
@@ -128,17 +121,19 @@ function onTouch(e: TouchEvent) {
   switch (mouseDate.state) {
     case MouseState.None:
       clickCheckTime = Date.now();
-
       switch (e.touches.length) {
         case 1:
+          mouseDate.point = { x: 0, y: 0 };
           mouseDate.state = MouseState.Move;
           break;
         case 2:
+          mouseDate.point = { x: 0, y: 0 };
           mouseDate.state = MouseState.Scroll;
-          break;
+          return;
         case 3:
+          mouseDate.point = { x: 0, y: 0 };
           mouseDate.state = MouseState.Drag;
-          break;
+          return;
       }
       handleMouseMove(e.touches);
       break;
@@ -147,11 +142,13 @@ function onTouch(e: TouchEvent) {
         case 1:
           break;
         case 2:
+          mouseDate.point = { x: 0, y: 0 };
           mouseDate.state = MouseState.Scroll;
-          break;
+          return;
         case 3:
+          mouseDate.point = { x: 0, y: 0 };
           mouseDate.state = MouseState.Drag;
-          break;
+          return;
       }
       handleMouseMove(e.touches);
       break;
@@ -163,6 +160,12 @@ function onTouch(e: TouchEvent) {
           break;
         case 3:
           mouseDate.state = MouseState.Drag;
+          ws.send(JSON.stringify({
+            pos_type: MouseState.LeftDown,
+            s: 0,
+            x: 0,
+            y: 0
+          }));
           break;
       }
       handleMouseMove(e.touches);

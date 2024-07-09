@@ -6,6 +6,10 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base:'./',
+  build: {
+    outDir: '../../target/debug/static',
+  },
   plugins: [
     vue(),
     vueJsx(),

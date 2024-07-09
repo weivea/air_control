@@ -1,4 +1,5 @@
 pub mod mouse;
+use std::env::current_exe;
 use salvo::serve_static::StaticDir;
 use salvo::websocket::WebSocketUpgrade;
 use salvo::{prelude::*, websocket::Message};
@@ -110,9 +111,11 @@ async fn connect(req: &mut Request, res: &mut Response) -> Result<(), StatusErro
 async fn main() {
     tracing_subscriber::fmt().init();
     let api_router = Router::with_path("api").get(hello);
+    let static_path = current_exe().unwrap().parent().unwrap().join("static");
 
+    println!("static_path  {:#?} ", static_path.to_str().unwrap());
     let static_router = Router::with_path("<**path>").get(
-        StaticDir::new(["static"])
+        StaticDir::new([static_path.to_str().unwrap()])
             .defaults("index.html")
             .auto_list(true),
     );
@@ -122,6 +125,6 @@ async fn main() {
         .push(ws_router)
         .push(static_router);
 
-    let acceptor = TcpListener::new("127.0.0.1:5800").bind().await;
+    let acceptor = TcpListener::new("0.0.0.0:5800").bind().await;
     Server::new(acceptor).serve(router).await;
 }
